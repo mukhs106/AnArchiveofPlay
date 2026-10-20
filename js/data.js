@@ -75,6 +75,7 @@
     "IMG_168.jpeg", "IMG_169.jpeg", "IMG_170.jpeg", "IMG_171.jpeg", "IMG_172.jpeg", "IMG_173.jpeg",
     "IMG_174.jpeg", "IMG_175.jpeg", "IMG_176.jpeg", "IMG_177.jpeg", "IMG_178.jpeg", "IMG_179.jpeg",
     "IMG_180.jpeg", "IMG_181.jpeg", "IMG_182.jpeg", "IMG_183.jpeg", "IMG_184.jpeg", "IMG_185.jpeg",
+    "IMG_186.gif",
   ];
 
   // Internal tags — not shown as metadata, used only to drive the
@@ -1323,6 +1324,18 @@
       caption: "",
       type: "secondary",
       tags: ["typography", "color", "shape"],
+      source: "",
+      location: "",
+      date: "",
+      keptBecause: "",
+      returnedTo: "",
+      connection: "",
+      collections: [],
+    },
+    "IMG_186.gif": {
+      caption: "",
+      type: "secondary",
+      tags: [],
       source: "",
       location: "",
       date: "",

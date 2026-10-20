@@ -15,8 +15,24 @@
 
   // ---------- helpers ----------
 
-  function imgUrl(img) {
-    return "images/" + img.file;
+  // Photos are served from resized copies (see js/image-dims.js), never
+  // the multi-megabyte originals: "sm" (400px) for the field at normal
+  // zoom and for small thumbnails, "md" (800px) once a card is zoomed
+  // in far enough to need it, "lg" (1600px) for the isolation view. A
+  // photo without generated copies (not in IMAGE_DIMS) falls back to
+  // its original file.
+  const DIMS = window.IMAGE_DIMS || {};
+  const TIER_PX = { sm: 400, md: 800 };
+
+  function imgUrl(img, tier) {
+    return DIMS[img.file] ? "images/" + tier + "/" + img.file : "images/" + img.file;
+  }
+
+  // The smallest field tier that still covers the card's on-screen size
+  // in device pixels at the current zoom.
+  function fieldTierFor(img) {
+    const need = Math.max(img.w, img.h) * zoom * (window.devicePixelRatio || 1);
+    return need <= TIER_PX.sm * 1.1 ? "sm" : "md";
   }
 
   function hueDist(a, b) {
@@ -42,21 +58,26 @@
     return images.filter((i) => i.collections.includes(state.collectionId));
   }
 
-  // ---------- preload real image dimensions ----------
+  // ---------- real image dimensions ----------
   // The cards are absolutely positioned by the layout algorithm before
   // they're added to the page, so we need each photo's real aspect
-  // ratio up front rather than letting the <img> load it lazily.
+  // ratio up front rather than letting the <img> load it lazily. These
+  // come from js/image-dims.js; only a photo missing from it is
+  // downloaded to measure (previously every original was, ~95MB,
+  // before anything could render).
+
+  function applyDims(img, nw, nh) {
+    nw = nw || 1; nh = nh || 1;
+    if (nw >= nh) { img.w = img.baseLong; img.h = Math.round(img.baseLong * nh / nw); }
+    else { img.h = img.baseLong; img.w = Math.round(img.baseLong * nw / nh); }
+  }
 
   function preloadDimensions() {
     return Promise.all(images.map((img) => new Promise((resolve) => {
+      const known = DIMS[img.file];
+      if (known) { applyDims(img, known[0], known[1]); return resolve(); }
       const probe = new Image();
-      probe.onload = () => {
-        const nw = probe.naturalWidth || 1;
-        const nh = probe.naturalHeight || 1;
-        if (nw >= nh) { img.w = img.baseLong; img.h = Math.round(img.baseLong * nh / nw); }
-        else { img.h = img.baseLong; img.w = Math.round(img.baseLong * nw / nh); }
-        resolve();
-      };
+      probe.onload = () => { applyDims(img, probe.naturalWidth, probe.naturalHeight); resolve(); };
       probe.onerror = resolve; // keep the provisional square box
       probe.src = imgUrl(img);
     })));
@@ -137,7 +158,8 @@
     const frame = document.createElement("div");
     frame.className = "photo-frame";
     const photo = document.createElement("img");
-    photo.src = imgUrl(img);
+    photo.dataset.tier = fieldTierFor(img);
+    photo.src = imgUrl(img, photo.dataset.tier);
     photo.alt = "";
     photo.loading = "lazy";
     photo.decoding = "async";
@@ -399,7 +421,24 @@
   function scheduleChunkCheck() {
     if (chunkCheckQueued) return;
     chunkCheckQueued = true;
-    requestAnimationFrame(() => { chunkCheckQueued = false; ensureChunksLoaded(); });
+    requestAnimationFrame(() => { chunkCheckQueued = false; ensureChunksLoaded(); upgradeCardImages(); });
+  }
+
+  // Zooming in can push cards past what the "sm" copy covers — swap
+  // those to "md". Only ever upgrades (zooming back out keeps the
+  // sharper copy already loaded), and only re-checks once zoom has
+  // actually grown, so panning costs nothing here.
+  let upgradedForZoom = 0;
+  function upgradeCardImages() {
+    if (zoom <= upgradedForZoom || !canvasEl) return;
+    upgradedForZoom = zoom;
+    canvasEl.querySelectorAll('.photo-card img[data-tier="sm"]').forEach((photo) => {
+      const img = images.find((x) => x.id === photo.closest(".photo-card").dataset.id);
+      if (img && fieldTierFor(img) === "md") {
+        photo.dataset.tier = "md";
+        photo.src = imgUrl(img, "md");
+      }
+    });
   }
 
   // Zooms by `factor`, anchored on the given viewport-local point (so
@@ -490,6 +529,7 @@
     pan.x = wrapWidth / 2;
     pan.y = toolbarHeight + 24;
     zoom = DEFAULT_ZOOM;
+    upgradedForZoom = zoom;
     applyTransform();
     ensureChunksLoaded();
   }
@@ -564,7 +604,7 @@
       const im = images.find((x) => x.id === id);
       const dot = document.createElement("button");
       dot.className = "trail-dot" + (id === state.isolatedId ? " current" : "");
-      dot.style.backgroundImage = `url('${imgUrl(im)}')`;
+      dot.style.backgroundImage = `url('${imgUrl(im, "sm")}')`;
       dot.title = im.code;
       dot.addEventListener("click", () => {
         state.trail = state.trail.slice(0, i + 1);
@@ -607,7 +647,7 @@
       btn.style.transform = `translateX(${shift}px)`;
       btn.title = p.label;
       btn.setAttribute("aria-label", p.label);
-      btn.innerHTML = `<span class="path-thumb" style="background-image:url('${imgUrl(p.image)}')"></span>`;
+      btn.innerHTML = `<span class="path-thumb" style="background-image:url('${imgUrl(p.image, "sm")}')"></span>`;
       btn.addEventListener("click", () => {
         state.trail.push(p.image.id);
         state.isolatedId = p.image.id;
@@ -619,7 +659,10 @@
 
   function renderIsolation(img) {
     const stage = document.getElementById("isolation-image");
-    stage.src = imgUrl(img);
+    // The field's "sm" copy is almost always cached already — shown
+    // underneath as a placeholder while the sharper "lg" copy loads.
+    stage.style.background = `center / cover url('${imgUrl(img, "sm")}')`;
+    stage.src = imgUrl(img, "lg");
 
     const aspect = img.w / img.h;
     const maxW = Math.min(window.innerWidth * 0.4, 420);

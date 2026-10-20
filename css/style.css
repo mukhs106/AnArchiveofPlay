@@ -1,11 +1,24 @@
 /* ------------------------------------------------------------------
    256 — a camera roll, mostly
-   Visual language: one monospace voice (DM Mono) for everything, a
+   Visual language: one serif voice (Libre Baskerville) for everything, a
    spaced-out scattered library on a warm, faintly grained ground, and
    a single interaction accent (#F5BD33) reserved for hover states —
    tying back to the idea of a highlighter dragged across something
    worth a second look.
 ------------------------------------------------------------------- */
+
+/* Self-hosted (SIL Open Font License) rather than loaded from Google
+   Fonts — one small same-origin file, preloaded in index.html, instead
+   of a render-blocking third-party stylesheet plus a second font host.
+   A single variable file covers weights 400–700; latin subset only. */
+@font-face {
+  font-family: "Libre Baskerville";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/libre-baskerville-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
   --paper: #ffffff;
@@ -17,7 +30,7 @@
 
   /* type — one family throughout; hierarchy comes from size/weight/
      spacing, not a second typeface */
-  --font: "DM Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --font: "Libre Baskerville", Baskerville, Georgia, "Times New Roman", serif;
   --font-display: var(--font); /* legacy alias, kept so nothing else needs renaming */
   --font-body: var(--font);
   --weight-regular: 400;
@@ -202,14 +215,14 @@ button {
   font-size: 28px;
   letter-spacing: -0.08em;
   line-height: 1.1;
-  color: #2F2965;
+  color: var(--ink);
 }
 
 .brand-sub {
   font-family: var(--font-body);
   font-size: 13px;
   letter-spacing: -0.05em;
-  color: #2F2965;
+  color: var(--ink);
   margin-top: 3px;
 }
 
@@ -323,7 +336,7 @@ button {
   font-size: 9.5px;
   font-weight: 500;
   letter-spacing: 0.015em;
-  color: var(--ink-soft);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -358,11 +371,9 @@ button {
   border: none;
   color: var(--ink);
   font-size: 20px;
-  opacity: 0.6;
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  transition: opacity 0.2s ease;
 }
 
 /* No yellow at all in the default state — the glow only appears on
@@ -381,10 +392,6 @@ button {
   transition: opacity 0.2s ease;
   z-index: -1;
   pointer-events: none;
-}
-
-.isolation-close:hover {
-  opacity: 1;
 }
 
 .isolation-close:hover::before {
@@ -422,7 +429,7 @@ button {
 }
 
 .trail-sep {
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--ink);
   font-size: 10px;
 }
 
@@ -478,7 +485,7 @@ button {
   margin-top: 20px;
   font-family: var(--font-body);
   font-size: 12px;
-  color: #2f2965;
+  color: var(--ink);
   text-align: center;
 }
 
@@ -496,31 +503,61 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: transparent; /* the SVG asset (assets/info-button.svg) is itself a complete circular "i" button — no separate CSS circle behind it */
+  padding: 0;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.35);
 }
 
+/* The "i" glyph is inline SVG filled with currentColor, so it follows
+   the black/white button states shared with the zoom controls below. */
 .info-btn-icon {
   display: block;
   width: 30px;
   height: 30px;
-  opacity: 0.7; /* default state only — hover/focus below restore full opacity */
+  flex: 0 0 auto;
 }
 
-/* Same treatment as the category symbols: a small wiggle, nothing
-   behind it — no glow ring, halo, or background change on hover. */
+/* Same treatment as the category symbols: a small wiggle on hover, on
+   top of the shared black/white state change. */
 .info-btn:hover .info-btn-icon,
 .info-btn:focus-visible .info-btn-icon {
-  opacity: 1;
   animation: symbolWiggle 0.45s ease-in-out 1;
 }
 
-/* Panel open (button "clicked") — stays fully opaque even once the
-   pointer is no longer hovering it, matching the hover/focus opacity
-   above rather than falling back to the dimmer default. */
-.info-btn[aria-expanded="true"] .info-btn-icon {
-  opacity: 1;
+/* ---------------- control button states ----------------
+   One black-and-white scheme shared by zoom −/+ and the info button:
+     default  — white fill, black glyph (black border)
+     hover    — inverted: black fill, white glyph
+     active   — black fill, white glyph, plus an inset white ring so a
+                press (and the info button while its panel is open)
+                reads as "pushed in", distinct from a plain hover. */
+
+.info-btn,
+.zoom-btn {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.info-btn:hover,
+.zoom-btn:hover,
+.info-btn:active,
+.zoom-btn:active,
+.info-btn[aria-expanded="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.info-btn:active,
+.zoom-btn:active,
+.info-btn[aria-expanded="true"] {
+  box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 3.5px var(--paper);
+}
+
+.info-btn:focus-visible,
+.zoom-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .info-panel {
@@ -530,8 +567,8 @@ button {
   z-index: 160;
   width: min(260px, calc(100vw - 48px));
   background: var(--paper);
-  border: 1px solid #2f2965;
-  box-shadow: 0 16px 40px -14px rgba(47, 41, 101, 0.3);
+  border: 1px solid var(--ink);
+  box-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.3);
   padding: 18px 20px;
 }
 
@@ -544,7 +581,7 @@ button {
   font-family: var(--font-body);
   font-size: 11.5px;
   line-height: 1.65;
-  color: #2f2965;
+  color: var(--ink);
 }
 
 .info-panel p:first-of-type {
@@ -563,13 +600,12 @@ button {
   height: 22px;
   border: none;
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--ink);
   font-size: 11px;
   border-radius: 50%;
 }
 
 .info-panel-close:hover {
-  color: var(--ink);
   background-color: var(--yellow-hover);
 }
 
@@ -585,7 +621,7 @@ button {
   display: flex;
   align-items: stretch;
   background: var(--paper);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ink);
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.35);
 }
 
@@ -597,19 +633,13 @@ button {
   justify-content: center;
   border: none;
   border-radius: 0; /* overrides the global button{} default — normal sharp square edges */
-  background: transparent;
-  color: var(--ink);
   font-family: var(--font-body);
   font-size: 22px;
   line-height: 1;
 }
 
 .zoom-btn:first-child {
-  border-right: 1px solid var(--line);
-}
-
-.zoom-btn:hover {
-  background: var(--yellow);
+  border-right: 1px solid var(--ink);
 }
 
 /* ---------------- symbol effects (instant triggers) ----------------

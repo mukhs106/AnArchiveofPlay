@@ -1355,7 +1355,7 @@
     const meta = METADATA[file] || {};
 
     // Internal-only: card size + aspect placeholder (real aspect ratio
-    // fills in once the image loads, see app.js preloadDimensions()).
+    // filled in from js/image-dims.js, see app.js preloadDimensions()).
     // Kept small overall, and large photos capped closer to medium so
     // the canvas stays airy rather than dominated by a few big cards.
     const sizeRoll = rng();

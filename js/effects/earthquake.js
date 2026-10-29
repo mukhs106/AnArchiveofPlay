@@ -143,28 +143,26 @@
     const cards = archive && archive.getCards && archive.getCards();
     if (!cards || !cards.length) return;
 
+    const frames = cards.map((card) => card.querySelector(".photo-frame")).filter(Boolean);
+
     // Clear any leftover glide-in offset from a previous trigger before
     // picking this trigger's pairs, so a card that isn't shuffled this
-    // time never keeps an old offset around.
-    cards.forEach((card) => {
-      const frame = card.querySelector(".photo-frame");
-      if (frame) {
-        frame.style.removeProperty("--shuffle-dx");
-        frame.style.removeProperty("--shuffle-dy");
-      }
+    // time never keeps an old offset around. Also drop any wiggle still
+    // running from a rapid re-click, so it restarts cleanly below.
+    frames.forEach((frame) => {
+      frame.style.removeProperty("--shuffle-dx");
+      frame.style.removeProperty("--shuffle-dy");
+      frame.classList.remove("fx-wiggle");
     });
 
     shufflePairs(cards);
 
-    cards.forEach((card) => {
-      const frame = card.querySelector(".photo-frame");
-      if (!frame) return;
+    // One forced reflow for the whole batch (rather than one per card,
+    // which stalled the main thread for hundreds of ms with a zoomed-out
+    // field) so re-adding the class below restarts each animation.
+    void document.body.offsetWidth;
 
-      // Restart cleanly even if this card is still mid-wiggle from a
-      // rapid re-click of the symbol.
-      frame.classList.remove("fx-wiggle");
-      void frame.offsetWidth; // force a reflow so re-adding the class below restarts the animation
-
+    frames.forEach((frame) => {
       frame.style.setProperty("--wig-x", signed(WIG_X).toFixed(1) + "px");
       frame.style.setProperty("--wig-y", signed(WIG_Y).toFixed(1) + "px");
       frame.style.setProperty("--wig-rot", signed(WIG_ROT).toFixed(1) + "deg");

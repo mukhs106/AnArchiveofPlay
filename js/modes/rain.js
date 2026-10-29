@@ -23,10 +23,7 @@
        layout wrote — see placeImage() in app.js), carries it down past
        the bottom of the current viewport before ctx.timeout removes it.
      - Removing one absolutely-positioned card never reflows any other
-       card (each one is placed independently) and never shrinks the
-       scrollable canvas height, since that height was already fixed by
-       the layout at the moment the card was placed, not by which cards
-       still happen to be in the DOM.
+       card (each one is placed independently).
 ------------------------------------------------------------------- */
 (function () {
   let zCounter = 998; // each new fall renders above every earlier one, avoiding arbitrary stacking when several are falling together
@@ -36,11 +33,12 @@
     card.dataset.falling = "1";
     card.classList.add("falling");
 
-    const canvasWrap = ctx.archive.getCanvasWrapEl();
     const top = parseFloat(card.style.top) || 0;
     const frame = card.querySelector(".photo-frame");
     const height = frame ? (parseFloat(frame.style.height) || 0) : 0;
-    const viewportBottom = canvasWrap.scrollTop + canvasWrap.clientHeight;
+    // World coordinates, same space as `top` — the field pans/zooms
+    // rather than scrolling, so the wrap's own scrollTop is always 0.
+    const viewportBottom = ctx.archive.getViewportBounds().bottom;
     const distance = Math.max(240, viewportBottom - top + height + 200); // clears the bottom of the current view with room to spare
 
     const duration = 900 + Math.random() * 500; // ms, within the "falls, then disappears" feel

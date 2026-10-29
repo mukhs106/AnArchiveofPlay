@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------
    modes/lose-track-of-time.js
-   "LOSE TRACK OF TIME" — the archive's own open-ended scroll (see
-   generateRegion/extendCanvasIfNeeded in app.js) already has no fixed
+   "LOSE TRACK OF TIME" — the archive's own pannable field (see
+   generateChunk/ensureChunksLoaded in app.js) already has no fixed
    end; this mode adds the one thing that turns that into wandering
    rather than a feed: a small, quiet creature drifting through the
    same field.

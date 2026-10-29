@@ -72,15 +72,25 @@
     else { img.h = img.baseLong; img.w = Math.round(img.baseLong * nw / nh); }
   }
 
+  // A photo listed in data.js whose file can't be loaded (e.g. registered
+  // before it was added to /images) is left out of the archive entirely,
+  // rather than scattered through the field as a broken image. Removed
+  // from `images` in place, so every reference to it (ArchiveAPI,
+  // association strategies) sees the same list.
   function preloadDimensions() {
+    const missing = new Set();
     return Promise.all(images.map((img) => new Promise((resolve) => {
       const known = DIMS[img.file];
       if (known) { applyDims(img, known[0], known[1]); return resolve(); }
       const probe = new Image();
       probe.onload = () => { applyDims(img, probe.naturalWidth, probe.naturalHeight); resolve(); };
-      probe.onerror = resolve; // keep the provisional square box
+      probe.onerror = () => { missing.add(img); resolve(); };
       probe.src = imgUrl(img);
-    })));
+    }))).then(() => {
+      for (let i = images.length - 1; i >= 0; i--) {
+        if (missing.has(images[i])) images.splice(i, 1);
+      }
+    });
   }
 
   // Not called from anywhere yet (no UI sets a collection id besides

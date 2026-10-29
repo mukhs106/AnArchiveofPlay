@@ -306,7 +306,6 @@ button {
   position: relative;
   overflow: hidden;
   background: var(--line);
-  box-shadow: rgba(255, 255, 255, 0.4);
   outline: 1px solid rgba(255, 255, 255, 0.4);
   outline-offset: -1px;
 }
@@ -642,12 +641,12 @@ button {
   border-right: 1px solid var(--ink);
 }
 
-/* ---------------- symbol effects (instant triggers) ----------------
-   EARTHQUAKE and CURSOR TRAIL (js/effects/earthquake.js,
-   js/effects/cursor-trail.js) fire once per click and finish on their
-   own — unlike the modes below, they never set body[data-mode] and
-   never show a symbol as "active", since nothing about them stays on
-   as a lens. */
+/* ---------------- symbol effects ----------------
+   EARTHQUAKE (js/effects/earthquake.js) is an instant trigger: it fires
+   once per click and finishes on its own, never setting body[data-mode]
+   or showing its symbol as "active". CURSOR TRAIL and DUPLICATES are
+   persistent modes (js/modes/), but their animations live here too
+   since they aren't scoped by body[data-mode]. */
 
 /* EARTHQUAKE ("wiggle") — each card's own .photo-frame gets a small,
    independent shimmy, never the .photo-card itself: MAGNET/DRIFT write
@@ -763,12 +762,10 @@ body[data-mode="drift"] .photo-card {
   transition: none;
 }
 
-/* MAGNET — clicking a photo makes it the field's center (see
-   js/modes/magnet.js); the base .photo-card cursor: pointer already
-   reads as clickable, so no override is needed here. The center gets
-   a soft glow on its frame, the same yellow already used for a
-   hovered card's glow, so it's clear which photo the field is
-   radiating from. */
+/* MAGNET — hovering a photo makes it the field's center (see
+   js/modes/magnet.js). The center gets a soft glow on its frame, the
+   same yellow already used for a hovered card's glow, so it's clear
+   which photo the field is radiating from. */
 body[data-mode="magnet"] .photo-card.magnet-center .photo-frame {
   box-shadow: 0 0 24px 6px rgba(255, 204, 0, 0.6);
 }
